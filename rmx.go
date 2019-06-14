@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vxcontrol/gls"
+	"github.com/modern-go/gls"
 )
 
 // Mutex is struct that contains information about recursive calls and input args:
