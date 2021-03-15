@@ -91,8 +91,7 @@ func (m *Mutex) Unlock() {
 	for {
 		m.internalMutex.Lock()
 		if m.currentGoRoutine == 0 {
-			m.currentGoRoutine = goRoutineID
-			break
+			panic("goroutine has already unlocked")
 		} else if m.currentGoRoutine == goRoutineID {
 			break
 		} else {
