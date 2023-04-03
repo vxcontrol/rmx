@@ -1,5 +1,3 @@
-//go:build arm64
-
 #include "textflag.h"
 
 TEXT ·getg(SB),NOSPLIT,$0-8
