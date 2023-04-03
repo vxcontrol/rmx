@@ -4,9 +4,9 @@ In the Golang world there is the problem that getting goroutine ID for any tasks
 But you can find [sad information](https://golang.org/doc/faq#no_goroutine_id) on the [FAQ page](https://golang.org/doc/faq) of the Golang documentation in [Rob Pike's comment](https://go.googlesource.com/go/+/992ce90f662467f04dd93b3bb565bb0414f82999%5E%21/#F0) that getting ID is imposible.
 We disagree with it and think that this should be present in Golang because often needs to use shared object in goroutine safe mode.
 
-Requires go version >= 1.4 for "Fast" mode.
+Requires go version >= 1.19 for "Fast" mode.
 
-This project based on [this](https://github.com/modern-go/gls) and gives possibility to use recursive mutex in two modes:
+This project gives possibility to use recursive mutex in two modes:
 - "Generic" that provides access to goroutine ID from runtime.stack call
 - "Fast" that provides the same access from reflective call to "runtime" internal object
 
