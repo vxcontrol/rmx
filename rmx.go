@@ -1,55 +1,37 @@
 package rmx
 
 import (
+	"errors"
 	"runtime"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/modern-go/gls"
+	"github.com/vxcontrol/rmx/goid"
 )
 
-// Mutex is struct that contains information about recursive calls and input args:
-// IsGeneric is initial argument that set behaviour of receiving goroutine ID
-// TimeWaitMS is initial argument that set waiting time between mutex state checks
+// Mutex goroutine-bound mutex implementation
 type Mutex struct {
-	IsGeneric        bool
+	// IsGeneric determines if slow (but probably more guaranteed way) goroutine ID detection
+	// process should be used
+	IsGeneric bool
+	// TimeWaitMS defines period between mutex state checks
 	TimeWaitMS       time.Duration
 	mutex            sync.Mutex
-	internalMutex    sync.Mutex
 	currentGoRoutine int64
 	lockCount        uint64
 }
 
-func (m *Mutex) getGenericRoutineID() int64 {
-	var buf [64]byte
-	n := runtime.Stack(buf[:], false)
-	if n <= 0 {
-		return 0
-	}
-	idFields := strings.Fields(strings.TrimPrefix(string(buf[:n]), "goroutine "))
-	if len(idFields) <= 0 {
-		return 0
-	}
-	id, err := strconv.ParseInt(idFields[0], 10, 64)
-	if err != nil {
-		return 0
-	}
-
-	return id
-}
-
-func (m *Mutex) getFastRoutineID() int64 {
-	return gls.GoID()
-}
+var (
+	ErrAlreadyUnlocked      = errors.New("Goroutine already unlocked")
+	ErrOtherGoroutineLocked = errors.New("Other goroutine already take the lock")
+)
 
 func (m *Mutex) getRoutineID() int64 {
 	if m.IsGeneric {
-		return m.getGenericRoutineID()
+		return goid.SlowGet()
 	}
 
-	return m.getFastRoutineID()
+	return goid.Get()
 }
 
 func (m *Mutex) wait() {
@@ -62,48 +44,46 @@ func (m *Mutex) wait() {
 	}
 }
 
-// Lock is function that locks state of current goroutine
+// Lock locks state of the current goroutine
 func (m *Mutex) Lock() {
 	goRoutineID := m.getRoutineID()
 
 	for {
-		m.internalMutex.Lock()
+		m.mutex.Lock()
 		if m.currentGoRoutine == 0 {
 			m.currentGoRoutine = goRoutineID
 			break
-		} else if m.currentGoRoutine == goRoutineID {
-			break
-		} else {
-			m.internalMutex.Unlock()
-			runtime.Gosched()
-			m.wait()
-			continue
 		}
+		if m.currentGoRoutine == goRoutineID {
+			break
+		}
+		m.mutex.Unlock()
+
+		runtime.Gosched()
+		m.wait()
 	}
 	m.lockCount++
-	m.internalMutex.Unlock()
+	m.mutex.Unlock()
 }
 
-// Unlock is function that unlocks state of current goroutine
-func (m *Mutex) Unlock() {
+// Unlock unlocks state of the current goroutine
+func (m *Mutex) Unlock() error {
 	goRoutineID := m.getRoutineID()
 
-	for {
-		m.internalMutex.Lock()
-		if m.currentGoRoutine == 0 {
-			panic("goroutine has already unlocked")
-		} else if m.currentGoRoutine == goRoutineID {
-			break
-		} else {
-			m.internalMutex.Unlock()
-			runtime.Gosched()
-			m.wait()
-			continue
-		}
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if m.currentGoRoutine == 0 {
+		return ErrAlreadyUnlocked
 	}
+	if m.currentGoRoutine != goRoutineID {
+		return ErrOtherGoroutineLocked
+	}
+
 	m.lockCount--
 	if m.lockCount == 0 {
 		m.currentGoRoutine = 0
 	}
-	m.internalMutex.Unlock()
+
+	return nil
 }
