@@ -46,14 +46,14 @@ jobs:
         run: go test -bench=. -benchmem -race -v ./...
       
       # 386
-      - name: 'Build with ${{ matrix.go }} for 386'
+      - name: 'Build with ${{ matrix.go }} for i386'
         if: ${{ matrix.arch == 'i386' }}
         env:
           GOARCH: 386
         run: |
           go test -c *.go && cd goid && go test -c ./...
       
-      - name: 'Test and Bench with ${{ matrix.go }} on 386'
+      - name: 'Test and Bench with ${{ matrix.go }} on i386'
         if: ${{ matrix.arch == 'i386' }}
         uses: vxcontrol/run-on-arch-action@0.9.0
         with:
