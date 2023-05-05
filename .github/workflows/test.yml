@@ -55,7 +55,7 @@ jobs:
       
       - name: 'Test and Bench with ${{ matrix.go }} on 386'
         if: ${{ matrix.arch == 'i386' }}
-        uses: GarnetOS/run-on-arch-action@5f2c49e22fdae70cf176fd8372c16670601c5d66
+        uses: vxcontrol/run-on-arch-action@0.9.0
         with:
           arch: i386
           distro: bullseye
@@ -74,7 +74,7 @@ jobs:
       
       - name: 'Test and Bench with ${{ matrix.go }} on arm64'
         if: ${{ matrix.arch == 'arm64' }}
-        uses: uraimo/run-on-arch-action@v2
+        uses: vxcontrol/run-on-arch-action@0.9.0
         with:
           arch: aarch64
           distro: bullseye
