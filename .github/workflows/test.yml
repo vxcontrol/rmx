@@ -18,6 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         arch:
+          - i386
           - arm64
           - amd64
         go:
@@ -44,6 +45,25 @@ jobs:
         if: ${{ matrix.arch == 'amd64' }}
         run: go test -bench=. -benchmem -race -v ./...
       
+      # 386
+      - name: 'Build with ${{ matrix.go }} for i386'
+        if: ${{ matrix.arch == 'i386' }}
+        env:
+          GOARCH: 386
+        run: |
+          go test -c *.go && cd goid && go test -c ./...
+      
+      - name: 'Test and Bench with ${{ matrix.go }} on i386'
+        if: ${{ matrix.arch == 'i386' }}
+        uses: vxcontrol/run-on-arch-action@0.9.0
+        with:
+          arch: i386
+          distro: bullseye
+          dockerRunArgs: --mount type=bind,source="$(pwd)",target=/checkout,readonly
+          run: |
+            find /checkout -name '*.test' -type f -executable -print0 | \
+              xargs -t -0 -I '{}' sh -c '{} -test.v && {} -test.bench=. -test.benchmem -test.v'
+      
       # arm64
       - name: 'Build with ${{ matrix.go }} for arm64'
         if: ${{ matrix.arch == 'arm64' }}
@@ -54,7 +74,7 @@ jobs:
       
       - name: 'Test and Bench with ${{ matrix.go }} on arm64'
         if: ${{ matrix.arch == 'arm64' }}
-        uses: uraimo/run-on-arch-action@v2
+        uses: vxcontrol/run-on-arch-action@0.9.0
         with:
           arch: aarch64
           distro: bullseye
