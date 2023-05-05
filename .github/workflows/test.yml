@@ -55,7 +55,7 @@ jobs:
       
       - name: 'Test and Bench with ${{ matrix.go }} on 386'
         if: ${{ matrix.arch == 'i386' }}
-        uses: GarnetOS/run-on-arch-action
+        uses: GarnetOS/run-on-arch-action@5f2c49e
         with:
           arch: i386
           distro: bullseye
